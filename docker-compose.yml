@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  productservice:
+    container_name: productservice
+    build:
+      context: ./ProductService
+    ports:
+      - "5000:8080"
+
+  cachelayer:
+    container_name: cachelayer
+    build:
+      context: ./CacheLayer
+    ports:
+      - "5001:8080"
+    depends_on:
+      - redis
+      - productservice
+  orderservice:
+    container_name: orderservice
+    build:
+      context: ./OrderService
+    ports:
+      - "5002:8080"
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+        - "6379:6379"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.1
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.2.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
